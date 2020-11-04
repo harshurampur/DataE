@@ -1,0 +1,36 @@
+import pandas as pd
+import requests
+
+url="http://data.addinsight.com/ACT/links_prop_stats_geo.json"
+
+resp = requests.get(url)
+
+results_df = pd.DataFrame.from_records(resp.json())
+
+for res in results_df.features:
+    print(res['properties'])
+    print(res['geometry'])
+
+
+ipython 
+
+ resp = requests.get(url)
+
+results_df = pd.DataFrame.from_records(resp.json())
+
+
+In [1]: for res in results_df.features:
+   ...:     for k,v in res['properties'].items():
+   ...:         if k =='Name':
+   ...:             print(k,v)
+   ...:         if k=='Id':
+   ...:             print(k,v)
+   ...:         if k=='IntervalStart':
+   ...:             print(k,v)
+
+
+?$where=fiscal_week between '2020-01-10T00:00:00.000' and '2020-12-31T00:00:00.000'
+list(x.encode('utf-8') if type(x) == type(u'') else x for x in worksheet.row_values(rownum
+
+
+clean up :) 
