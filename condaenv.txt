@@ -1,0 +1,106 @@
+Joe comments:
+
+# setting up jupyter lab with support for interactive plots using plotly
+# instructions from https://plot.ly/python/getting-started/
+# note installing packages into a data lake node requires correct proxy settings
+# .yarnrc, .npmrc (given below)
+# also requires node to be installed 
+
+# create conda environment, must be python>=3.5
+conda create -n lab python=3.7
+
+# activate new environment
+source activate lab
+
+# install plotly (use -y flag to ignore prompt)
+conda install -c plotly plotly=4.4.1
+
+# install nodejs - required for jupyterlab extensions
+conda install nodejs
+
+# install jupyterlab
+conda install jupyterlab=1.2
+conda install "ipywidgets=7.5"
+
+# install jupyterlab extensions ===============================================
+
+# Avoid "JavaScript heap out of memory" errors during extension installation
+export NODE_OPTIONS=--max-old-space-size=4096
+
+# Jupyter widgets extension
+jupyter labextension install @jupyter-widgets/jupyterlab-manager@1.1 --no-build
+
+# jupyterlab renderer support
+jupyter labextension install jupyterlab-plotly@1.4.0 --no-build
+
+# FigureWidget support
+jupyter labextension install plotlywidget@1.4.0 --no-build
+
+# Build extensions (must be done to activate extensions since --no-build is used above)
+jupyter lab build
+
+# Unset NODE_OPTIONS environment variable
+unset NODE_OPTIONS
+#==============================================================================
+
+# run jupyterlab
+ 
+# may also want
+conda install pandas
+
+# config files ================================================================
+(lab) [joseph_walshe@tstapp332vs ~]$ cat .npmrc
+https-proxy=http://localhost:3128
+proxy=http://localhost:3128
+strict-ssl=false
+registry=http://registry.npmjs.org/
+
+(lab) [joseph_walshe@tstapp332vs ~]$ cat .yarnrc
+https-proxy "http://localhost:3128"
+stric-ssl false
+registry "http://registry.yarnpkg.com"
+#==============================================================================
+
+# to run pyspark in jupyterlab
+export PYSPARK_DRIVER_PYTHON=jupyter
+export PYSPARK_DRIVER_PYTHON_OPTS='lab --port 8887'
+
+# then run using 
+pyspark 
+
+# to run without pyspark
+jupyter lab --port 8887 
+
+
+######################################################################################
+on 332 
+
+pid', x
+'event_nm', 
+'event_location',x 
+'event_street', x
+'event_suburb',x
+ 'event_city', x
+ 'event_state', x
+ 'event_country', x
+ 'event_lat', x
+ 'event_long', x
+ 'free_flag',x
+ 'event_start_dt',x
+ 'event_end_dt',x
+ 'event_date_pk', x
+ 'event_start_tm',x 
+ 'event_end_tm', x
+ 'event_status',x
+ 'event_cs_status',x
+ 'event_own_org_nm', x
+ 'event_own_org_num',x
+ 'event_org_abn',x
+ 'event_org_email',x
+ 'event_org_contact',x
+ 'event_url',x
+ 'event_frequency',x
+ 'event_size',x
+ 'ACL_flag', x
+ 'market_flag'x
+

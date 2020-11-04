@@ -1,0 +1,157 @@
+df_tag = pd.read_csv("/mapr/datalake.test.act.gov.au/Data/TCCS/MyWay/SourceData/01-may-2020.csv",header = 0,skiprows = [0,1], dtype = str )
+df_tag = df_tag.fillna(0)
+df_tag.head()
+
+
+df_tag2 = pd.read_csv("/mapr/datalake.test.act.gov.au/Data/TCCS/MyWay/SourceData/01-may-2020.csv", dtype=str)
+k = str(df_tag2.loc[0])
+k.split()[0]
+#df_tag2.iloc[0]=0
+#df_tag2 = df_tag2[1:]
+df_tag2.drop(df_tag2.index[0], inplace = True)
+
+df_tag2 = df_tag2.fillna(0)
+#df_tag2.drop(df_tag2.columns[1],axis=1, inplace = True)
+
+def stopnamepoints(stopname, stopid):
+    print(stopname)
+    match="Platform "
+    not_match="Set Down Only"
+    if match in stopname and not_match not in stopname:
+        stopname_first=stopname.split()[0]
+        for i in range (0, len(df_train)):
+            if stopname_first in df_train.loc[i,'STOPNAME']:
+                lat=float((((df_train.loc[i,'the_geom']).replace('(',' ')).replace(')',' ')).split()[2])
+                lon=float((((df_train.loc[i,'the_geom']).replace('(',' ')).replace(')',' ')).split()[1]) 
+                return lat,lon
+    else:
+        stopname_first=stopname.split()[0]
+        for i in range (0, len(df)):
+            if stopid == df.loc[i,'stop_id']:
+                lat=float((((df.loc[i,'the_geom']).replace('(',' ')).replace(')',' ')).split()[2])
+                lon=float((((df.loc[i,'the_geom']).replace('(',' ')).replace(')',' ')).split()[1]) 
+                return lat,lon
+				
+
+date_ref = "01-May-2020"
+df_tag_transformed = pd.DataFrame(columns = ['StopId','StopName','TimeStamp','TagON', 'TagOFF', "Lat", "Lon","TagOnOff","LessThan10Flag"])
+df_tag_transformed.columns
+
+for i in range (0,(len(df_tag)-1)):
+    #print(df_tag.loc[i])
+    #print(df_tag.loc[i][0])
+    stop_details = df_tag.loc[i][0]
+    stop_id_search = re.search("[0-9]+[:]",stop_details)
+    stop_id_span = stop_id_search.span()
+    stop_id = stop_details[stop_id_span[0]:stop_id_span[1]-1]
+    #print(stop_id)
+    stop_id=int(stop_id)
+    stop_name = stop_details[stop_id_span[1]+1:]
+    #print(stop_name)
+    #match=" "
+    #not_match="Set Down Only"
+    #if match in stop_name and not_match not in stop_name:
+    print(stop_name)
+    df_tag_transformed.loc[i,'StopId'] = stop_id
+    df_tag_transformed.loc[i,'StopName'] = stop_name
+        #print(len(df_tag.loc[i]))
+    time_ref = 0
+    df_tag_transformed.loc[i,'TimeStamp']=date_ref+" "+str(time_ref)+":00"
+    df_tag_transformed.loc[i,'TimeStamp']=pd.to_datetime(df_tag_transformed.loc[i,'TimeStamp'],format = "%d-%b-%Y %H:%M")
+    df_tag_transformed.loc[i,'TagON']= df_tag.loc[i][1]
+    df_tag_transformed.loc[i,'TagOFF']= df_tag.loc[i][22]
+    lat, lon = stopnamepoints(stop_name, stop_id)
+    df_tag_transformed.loc[i,'Lat']=lat
+    df_tag_transformed.loc[i,'Lon']=lon
+    for j in range (1, 2):
+        time_ref = time_ref + j
+        lat, lon = stopnamepoints(stop_name, stop_id)
+        #df_tag_transformed.loc[i,'Time Stamp'] = str(date_ref+" "+str(time_ref))
+            #print(df_tag.loc[i][j])
+        value = df_tag.loc[i][j]
+        value_off = df_tag.loc[i][(j+22)]
+        time_stamp = date_ref+" "+str(time_ref)+":00"
+        time_stamp= pd.to_datetime(time_stamp,format = "%d-%b-%Y %H:%M")
+        df_tag_transformed = df_tag_transformed.append({'StopId': stop_id,
+                                   'StopName': stop_name,
+                                   'TimeStamp': time_stamp,
+                                   'TagON': value,
+                                   'TagOFF': value_off,
+                                   'Lat': lat,
+                                   'Lon': lon
+                                      }, ignore_index=True)
+    time_ref = 5
+    for j in range (3, 22):
+        value = df_tag.loc[i][j]
+        value_off = df_tag.loc[i][(j+21)]
+        lat, lon = stopnamepoints(stop_name, stop_id)
+            #print(time_ref)
+            #df_tag_transformed.loc[i,'Time Stamp'] = str(date_ref+" "+str(time_ref))
+        time_stamp = date_ref+" "+str(time_ref)+":00"
+            #print(df_tag.loc[i][j])
+        time_stamp= pd.to_datetime(time_stamp,format = "%d-%b-%Y %H:%M")
+        time_ref = time_ref + 1 
+        df_tag_transformed = df_tag_transformed.append({'StopId': stop_id,
+                                   'StopName': stop_name,
+                                   'TimeStamp': time_stamp,
+                                   'TagON': value,
+                                   'TagOFF': value_off,
+                                   'Lat': lat,
+                                   'Lon': lon
+                                      }, ignore_index=True)
+
+
+
+for i in range(0,len(df_tag_heat)):
+    print(df_tag_heat.loc[i,"TimeStamp"])
+    print(df_tag_heat.loc[i,"TimeStamp"].strftime('%Y-%m-%d %H:%M'))
+    df_tag_heat.loc[i,"TimeStamp"]=df_tag_heat.loc[i,"TimeStamp"].strftime('%Y-%m-%d %H:%M')
+	
+	
+	
+#Create DF for bus stops and tram stops and store it in an other form of csv 
+busfilepath='/mapr/datalake.test.act.gov.au/Data/TCCS/MyWay/SourceData/Bus_Stops_-_New_Network_July_2020.csv'
+tramstoppath='/mapr/datalake.test.act.gov.au/Data/TCCS/MyWay/SourceData/LightRailStops.csv'
+cra_bounds='/mapr/datalake.test.act.gov.au/Data/TCCS/MyWay/SourceData/cra_suburb.geojson'
+def getdflocation(buspath, trampath, cra_bounds):
+    df_bus=pd.read_csv(buspath)
+    df_tram=pd.read_csv(trampath)
+    with open(filepath) as f:
+        geo_json_cra = json.load(f)
+    feature=geo_json_cra['features']
+    df_location=pd.DataFrame(columns = ['Reporting_Loc_Id','Reporting_Loc_Type',"Reporting_Loc_Name", "Loc_Lat", "Loc_Lon","ActiveFlag", "PrecinctFK"])
+    loctype="Bus Stop"
+    count=0
+    for i in range(0,len(df_bus)):
+        lat,lon=getlatlon(df_bus.loc[i,"the_geom"])
+        point=Point(lon, lat)
+        #print(point)
+        #pointverify=verify_bounds(point,feature)
+        for feat in feature:
+            polygon = shape(feat['geometry'])
+            if polygon.contains(point):
+                df_location.loc[count,"Loc_Lat"],df_location.loc[count,"Loc_Lon"]= lat,lon
+                df_location.loc[count,"Reporting_Loc_Type"]=loctype
+                df_location.loc[count,"Reporting_Loc_Id"]=df_bus.loc[i,"stop_id"]
+                df_location.loc[count,"Reporting_Loc_Name"]=df_bus.loc[i,"stop_name"]
+                count=count+1    
+            #print(type(df_bus.loc[i,"the_geom"]))
+            #print(df_location.loc[count,"Loc_Lat"])
+    loctype="Tram Stop"
+    feature=geo_json_cra['features']
+    for i in range(0,len(df_tram)):
+        lat,lon=getlatlon(df_tram.loc[i,"the_geom"])
+        point=Point(lon, lat)
+        print(point)
+        for feat in feature:
+            polygon = shape(feat['geometry'])
+            if polygon.contains(point):
+                df_location.loc[count,"Loc_Lat"],df_location.loc[count,"Loc_Lon"]= lat,lon
+                df_location.loc[count,"Reporting_Loc_Type"]=loctype
+                df_location.loc[count,"Reporting_Loc_Id"]=df_tram.loc[i,"OBJECTID"]
+                df_location.loc[count,"Reporting_Loc_Name"]=df_tram.loc[i,"STOPNAME"]
+                count=count+1
+    #df_location.to_csv("/mapr/datalake.test.act.gov.au/Data/TCCS/MyWay/SourceData/reporting_location.csv")
+    return df_location
+	
+	
